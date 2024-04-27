@@ -1,3 +1,5 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 import pandas as pd
 from datetime import datetime
 
@@ -10,70 +12,61 @@ try:
 except FileNotFoundError:
     df_ventas = pd.DataFrame(columns=["Fecha", "Cantidad", "Monto Total", "Pagado"])
 
-def menu_principal():
-    while True:
-        print("\nMenú Principal")
-        print("1. Ingresar Venta")
-        print("2. Recibir Pago")
-        print("3. Ver Ganancias")
-        print("4. Salir")
-        opcion = input("Seleccione una opción: ")
-        
-        if opcion == '1':
-            ingresar_venta()
-        elif opcion == '2':
-            recibir_pago()
-        elif opcion == '3':
-            ver_ganancias()
-        elif opcion == '4':
-            print("Guardando datos...")
-            df_ventas.to_excel(archivo_excel, index=False)
-            print("Datos guardados. Hasta luego!")
-            break
-        else:
-            print("Opción no válida, intente de nuevo.")
-
+# Funciones del programa
 def ingresar_venta():
-    print("\nIngresar Venta")
-    print("1. Fiado")
-    print("2. Pagado")
-    tipo = input("Seleccione el tipo de venta: ")
+    tipo = simpledialog.askstring("Tipo de Venta", "Ingrese 'fiado' o 'pagado':")
+    cantidad = simpledialog.askinteger("Cantidad", "Ingrese la cantidad:")
+    monto_total = simpledialog.askfloat("Monto Total", "Ingrese el monto total:")
     
-    cantidad = int(input("Ingrese la cantidad: "))
-    monto_total = float(input("Ingrese el monto total: "))
-    
-    if tipo == '1':
-        fecha = input("Ingrese la fecha (formato YYYY-MM-DD): ")
+    if tipo.lower() == 'fiado':
+        fecha = simpledialog.askstring("Fecha", "Ingrese la fecha (formato YYYY-MM-DD):")
         df_ventas.loc[len(df_ventas)] = [fecha, cantidad, monto_total, False]
-    elif tipo == '2':
+    elif tipo.lower() == 'pagado':
         df_ventas.loc[len(df_ventas)] = [datetime.now().strftime("%Y-%m-%d"), cantidad, monto_total, True]
     else:
-        print("Opción no válida")
+        messagebox.showerror("Error", "Tipo de venta no válido")
 
 def recibir_pago():
-    print("\nVentas Fiadas")
     ventas_fiadas = df_ventas[df_ventas['Pagado'] == False]
-    
     if ventas_fiadas.empty:
-        print("No hay ventas fiadas pendientes de pago.")
+        messagebox.showinfo("Recibir Pago", "No hay ventas fiadas pendientes de pago.")
         return
-    
-    print(ventas_fiadas)
-    index_venta = int(input("Ingrese el número de la venta a marcar como pagada: "))
-    
+
+    index_venta = simpledialog.askinteger("Recibir Pago", f"Seleccione el número de la venta a marcar como pagada:\n{ventas_fiadas}")
     if index_venta in ventas_fiadas.index:
         df_ventas.at[index_venta, 'Pagado'] = True
-        print("Venta actualizada como pagada.")
+        messagebox.showinfo("Pago", "Venta actualizada como pagada.")
     else:
-        print("Número de venta no válido.")
+        messagebox.showerror("Error", "Número de venta no válido")
 
 def ver_ganancias():
     if df_ventas.empty:
-        print("No hay ventas registradas.")
+        messagebox.showinfo("Ganancias", "No hay ventas registradas.")
         return
 
     total_monto = df_ventas['Monto Total'].sum()
     total_cantidad = df_ventas['Cantidad'].sum()
-    print(f"\nGanancias Totales:\nMonto Total: ${total_monto}\nCantidad Total Vendida: {total_cantidad}")
+    messagebox.showinfo("Ganancias Totales", f"Monto Total: ${total_monto}\nCantidad Total Vendida: {total_cantidad}")
 
-menu_principal()
+def guardar_salir():
+    df_ventas.to_excel(archivo_excel, index=False)
+    window.quit()
+
+# Configuración de la ventana principal
+window = tk.Tk()
+window.title("Sistema de Ventas")
+
+# Botones
+btn_ingresar_venta = tk.Button(window, text="Ingresar Venta", command=ingresar_venta)
+btn_recibir_pago = tk.Button(window, text="Recibir Pago", command=recibir_pago)
+btn_ver_ganancias = tk.Button(window, text="Ver Ganancias", command=ver_ganancias)
+btn_salir = tk.Button(window, text="Salir", command=guardar_salir)
+
+# Posicionamiento de los botones
+btn_ingresar_venta.pack(pady=10)
+btn_recibir_pago.pack(pady=10)
+btn_ver_ganancias.pack(pady=10)
+btn_salir.pack(pady=10)
+
+# Ejecutar la GUI
+window.mainloop()
